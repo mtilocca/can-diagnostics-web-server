@@ -14,9 +14,8 @@ This is designed to be a practical **HIL / SIL diagnostics UI** for your vehicle
 
 ## Screenshot
 
-![CAN Web Dashboard](../can_web_server.png)
+![CAN Web Dashboard](can_web_server.png)
 
-> If the image doesn’t render on GitHub, confirm the file is committed at the repo root as `can_web_server.png`.
 
 ---
 
