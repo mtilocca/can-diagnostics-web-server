@@ -2,28 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>vcan0 CAN Dashboard</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header class="topbar">
     <div>
-      <h1>CAN Dashboard</h1>
-      <div class="sub">Live decode from <span id="iface">…</span> · <span id="ts">…</span></div>
+      <div class="title">CAN Dashboard</div>
+      <div class="subtitle">Live decode from vcan0 (or any SocketCAN iface)</div>
     </div>
+
     <div class="controls">
       <label>Refresh (ms)
-        <input id="period" type="number" min="50" step="50" value="200" />
+        <input id="refreshMs" type="number" min="50" step="50" value="200" />
       </label>
-      <button id="apply">Apply</button>
+      <button id="applyRefresh">Apply</button>
     </div>
   </header>
 
   <main class="grid">
     <section class="card">
-      <h2>Decoded signals</h2>
-      <table>
+      <div class="card-title">Decoded signals</div>
+      <table class="table" id="signalsTable">
         <thead>
           <tr>
             <th>Frame</th>
@@ -35,13 +36,13 @@
             <th>Comment</th>
           </tr>
         </thead>
-        <tbody id="signals"></tbody>
+        <tbody></tbody>
       </table>
     </section>
 
-    <section class="card">
-      <h2>Raw frames (latest)</h2>
-      <table>
+    <section class="card full">
+      <div class="card-title">Raw frames (latest)</div>
+      <table class="table" id="rawTable">
         <thead>
           <tr>
             <th>Time</th>
@@ -51,71 +52,11 @@
             <th>ASCII</th>
           </tr>
         </thead>
-        <tbody id="raw"></tbody>
+        <tbody></tbody>
       </table>
     </section>
   </main>
 
-<script>
-let timer = null;
-
-function fmtTime(t) {
-  try { return new Date(t).toLocaleTimeString(); } catch { return String(t); }
-}
-
-function setText(id, v) { document.getElementById(id).textContent = v; }
-
-async function tick() {
-  const res = await fetch("/api/state", { cache: "no-store" });
-  const data = await res.json();
-
-  setText("iface", data.iface);
-  setText("ts", new Date(data.ts).toLocaleString());
-
-  const sigBody = document.getElementById("signals");
-  sigBody.innerHTML = "";
-  for (const s of data.signals) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><div class="mono">${s.frame_name}</div><div class="muted mono">${s.frame_id}</div></td>
-      <td class="mono">${s.name}</td>
-      <td class="mono">${Number(s.value).toFixed(4).replace(/\.?0+$/,'')}</td>
-      <td>${s.unit || ""}</td>
-      <td><span class="pill ${s.direction === "rx" ? "rx" : "tx"}">${s.direction}</span></td>
-      <td class="mono">${fmtTime(s.updated_at)}</td>
-      <td class="muted">${s.comment || ""}</td>
-    `;
-    sigBody.appendChild(tr);
-  }
-
-  const rawBody = document.getElementById("raw");
-  rawBody.innerHTML = "";
-  for (let i = data.raw.length - 1; i >= 0; i--) {
-    const r = data.raw[i];
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="mono">${fmtTime(r.ts)}</td>
-      <td class="mono">${r.id}</td>
-      <td class="mono">${r.dlc}</td>
-      <td class="mono">${r.data_hex}</td>
-      <td class="mono muted">${r.data_ascii}</td>
-    `;
-    rawBody.appendChild(tr);
-  }
-}
-
-function start(periodMs) {
-  if (timer) clearInterval(timer);
-  tick();
-  timer = setInterval(tick, periodMs);
-}
-
-document.getElementById("apply").addEventListener("click", () => {
-  const period = Number(document.getElementById("period").value || 200);
-  start(Math.max(50, period));
-});
-
-start(200);
-</script>
+  <script src="/app.js"></script>
 </body>
 </html>
